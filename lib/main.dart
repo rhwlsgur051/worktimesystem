@@ -6,8 +6,6 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'dart:async';
 
-import 'package:work_start_end/history.dart';
-
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -53,7 +51,7 @@ class _MainPage extends State<MainPage> {
 
   /////////clock//////////
 
-  String _timeString = '';
+  String _timeString;
 
   SharedPreferences timeHouse;
   var startTime;
@@ -120,7 +118,7 @@ class _MainPage extends State<MainPage> {
     this.diffTime = DateFormat('HH:mm:ss')
         .format(DateTime.fromMillisecondsSinceEpoch(this.diff, isUtc: true));
 
-    return '퇴근까지\n' + this.diffTime;
+    return this.diffTime;
   }
 
   timeCheck() async {
@@ -309,7 +307,7 @@ class _MainPage extends State<MainPage> {
   }
 
   Future onSelectNotification(String payload) {
-    showDialog(
+    showCupertinoDialog(
         context: context,
         builder: (_) => new AlertDialog(
               title: new Text('퇴근시간 알림'),
@@ -323,103 +321,120 @@ class _MainPage extends State<MainPage> {
       appBar: AppBar(
         centerTitle: true,
         title: Text('WorkTimeSystem', textAlign: TextAlign.center),
-        backgroundColor: Color.fromARGB(255, 8, 68, 123),
+        backgroundColor: Color.fromRGBO(0, 88, 142, 1.0),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            Expanded(
-              flex: 1,
-              child: Image.asset(
-                'lib/logo.png',
-                scale: 1.8,
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: Container(
-                  child: _timeString == null
-                      ? Text('')
-                      : Text(
-                          _timeString,
-                          style: Theme.of(context).textTheme.display1,
-                          textAlign: TextAlign.center,
-                        )),
-            ),
-            Expanded(
-              flex: 1,
-              child: Container(
-                  width: 200.0,
-                  height: 200.0,
-                  child: FittedBox(
-                    child: FlatButton(
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30.0)),
-                        color: Color.fromARGB(255, 8, 68, 123),
-                        child: Text('START',
-                            style:
-                                TextStyle(fontSize: 10, color: Colors.white)),
-                        onPressed: () => _startWork(null, null)),
-                    // onPressed: initWorkTime),
-                  )),
-            ),
-            Expanded(
-              flex: 1,
-              child: startTime == null
-                  ? Text(
-                      '아직 출근하지 않았습니다.',
-                      style: TextStyle(fontSize: 17),
+            Container(
+              child: _timeString == null
+                  ? Image.asset(
+                      'lib/shoes.png',
+                      scale: 1.0,
                     )
-                  : Padding(
-                      padding: EdgeInsets.only(top: 30),
-                      child: Text(
-                        '오늘출근 : ' + startTime,
-                        style: TextStyle(fontSize: 17),
-                      )),
-            ),
-            Expanded(
-              flex: 1,
-              child: endTime == null
-                  ? Text('')
-                  : Text(
-                      '오늘퇴근 : ' + endTime,
-                      style: TextStyle(fontSize: 17),
+                  : Image.asset(
+                      'lib/clock.png',
+                      scale: 1.0,
                     ),
             ),
-            Expanded(
-              flex: 1,
+            Container(
+              margin: EdgeInsets.only(top: 20),
+              child: Text(
+                _timeString == null ? '출근중' : '퇴근까지',
+                style: TextStyle(
+                    fontSize: 33, color: Color.fromRGBO(109, 109, 109, 1.0)),
+              ),
+            ),
+            Container(
+                margin: EdgeInsets.only(top: 10, bottom: 20),
+                child: _timeString == null
+                    ? Text(
+                        '00:00:00',
+                        style: TextStyle(
+                          fontSize: 65,
+                          color: Color.fromRGBO(6, 86, 136, 0.3),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      )
+                    : Text(
+                        _timeString,
+                        style: TextStyle(
+                          fontSize: 65,
+                          color: Color.fromRGBO(6, 86, 136, 1.0),
+                          fontStyle: FontStyle.italic,
+                        ),
+                        textAlign: TextAlign.center,
+                      )),
+            Container(
+              width: 150,
+              height: 55,
+              margin: EdgeInsets.only(bottom: 20),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
-                  FlatButton(
-                    child: Text('TEST BUTTOn'),
-                    onPressed: test,
-                  ),
-                  FlatButton(
-                    child: Text('초기화', style: TextStyle(color: Colors.white)),
-                    onPressed: resetDialog,
-                    color: Color.fromARGB(255, 8, 68, 123),
-                  ),
-                  FlatButton(
-                    child: Text('직접 입력', style: TextStyle(color: Colors.white)),
-                    onPressed: showDatePicker,
-                    color: Color.fromARGB(255, 8, 68, 123),
-                  )
+                  startTime == null
+                      ? Text(
+                          '출근시간 : 00:00',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Color.fromRGBO(109, 109, 109, 1.0),
+                          ),
+                        )
+                      : Text(
+                          '오늘출근 : ' + startTime,
+                          style: TextStyle(fontSize: 16),
+                        ),
+                  endTime == null
+                      ? Text(
+                          '퇴근시간 : 00:00',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Color.fromRGBO(109, 109, 109, 1.0),
+                          ),
+                        )
+                      : Text(
+                          '오늘퇴근 : ' + endTime,
+                          style: TextStyle(fontSize: 16),
+                        ),
                 ],
               ),
+            ),
+            Container(
+              margin: EdgeInsets.only(top: 30, bottom: 10),
+              width: 252,
+              height: 45,
+              child: FlatButton(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.0)),
+                  color: Color.fromRGBO(8, 67, 123, 1.0),
+                  child: _timeString == null
+                      ? Text(
+                          'Arrive',
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        )
+                      : Text(
+                          'Reset',
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
+                  onPressed: () => _timeString == null
+                      ? _startWork(null, null)
+                      : resetDialog()),
+            ),
+            FlatButton(
+              child: Text(
+                '직접 입력',
+                style: TextStyle(
+                    color: Color.fromRGBO(8, 67, 123, 1.0), fontSize: 16),
+              ),
+              onPressed: showDatePicker,
             )
           ],
         ),
       ),
     );
-  }
-
-  addHistory() {}
-
-  test() {
-    Navigator.push(
-        context, MaterialPageRoute(builder: (context) => HistoryPage()));
   }
 
   resetDialog() {
@@ -515,7 +530,7 @@ class _MainPage extends State<MainPage> {
         payload: '퇴근 30분 전입니다.');
 
     await flutterLocalNotificationsPlugin.schedule(
-        0, 'WorkTimeSystem', '퇴근 10분전 알림', endWorkTime, platform,
+        0, 'WorkTimeSystem', '퇴근 10분전 알��', endWorkTime, platform,
         payload: '퇴근 10분 전입니다.');
   }
 

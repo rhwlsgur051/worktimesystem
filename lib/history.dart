@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
+import 'dart:convert';
 
 class HistoryPage extends StatefulWidget {
   @override
@@ -27,14 +28,18 @@ class _HistoryPageState extends State<HistoryPage> {
                 if (data.data == null) {
                   return Container();
                 }
+                return Container(
+                  child: Text('^_^'),
+                );
               })),
     );
   }
 
   getData() async {
     SharedPreferences history = await SharedPreferences.getInstance();
-    print(history.getString('timeHouse'));
-    
-    return null;
+    var data = history.getString('2020-01-28');
+    print(history.getKeys());
+
+    return json.decode(data);
   }
 }
