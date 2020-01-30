@@ -306,12 +306,21 @@ class _MainPage extends State<MainPage> {
             ));
   }
 
-  Future onSelectNotification(String payload) {
+  Future onSelectNotification(String payload) async {
     showCupertinoDialog(
         context: context,
         builder: (_) => new AlertDialog(
               title: new Text('퇴근시간 알림'),
               content: new Text('$payload'),
+              actions: <Widget>[
+                CupertinoDialogAction(
+                  isDefaultAction: true,
+                  child: Text('OK'),
+                  onPressed: () async {
+                    Navigator.pop(context);
+                  },
+                )
+              ],
             ));
   }
 
@@ -423,14 +432,16 @@ class _MainPage extends State<MainPage> {
                       ? _startWork(null, null)
                       : resetDialog()),
             ),
-            FlatButton(
-              child: Text(
-                '직접 입력',
-                style: TextStyle(
-                    color: Color.fromRGBO(8, 67, 123, 1.0), fontSize: 16),
-              ),
-              onPressed: showDatePicker,
-            )
+            _timeString == null
+                ? FlatButton(
+                    child: Text(
+                      '직접 입력',
+                      style: TextStyle(
+                          color: Color.fromRGBO(8, 67, 123, 1.0), fontSize: 16),
+                    ),
+                    onPressed: showDatePicker,
+                  )
+                : FlatButton()
           ],
         ),
       ),
@@ -526,11 +537,11 @@ class _MainPage extends State<MainPage> {
     await flutterLocalNotificationsPlugin.cancelAll();
 
     await flutterLocalNotificationsPlugin.schedule(
-        0, 'WorkTimeSystem', '퇴근시간 알림', scheduledNotificationDateTime, platform,
+        0, 'before30min', '퇴근시간 알림', scheduledNotificationDateTime, platform,
         payload: '퇴근 30분 전입니다.');
 
     await flutterLocalNotificationsPlugin.schedule(
-        0, 'WorkTimeSystem', '퇴근 10분전 알��', endWorkTime, platform,
+        0, 'before10min', '퇴근 10분전 알림', endWorkTime, platform,
         payload: '퇴근 10분 전입니다.');
   }
 
