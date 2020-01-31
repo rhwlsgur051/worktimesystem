@@ -64,6 +64,7 @@ class _MainPage extends State<MainPage> {
   void runTimer() {
     timer = Timer.periodic(Duration(seconds: 1), (Timer t) {
       if (this.checkTimer == false || this.diff < 1) {
+        _timeString = null;
         t.cancel();
         reset(0);
       } else {
@@ -537,11 +538,11 @@ class _MainPage extends State<MainPage> {
     await flutterLocalNotificationsPlugin.cancelAll();
 
     await flutterLocalNotificationsPlugin.schedule(
-        0, 'before30min', '퇴근시간 알림', scheduledNotificationDateTime, platform,
+        0, 'WorkTimeSystem', '퇴근시간 알림', scheduledNotificationDateTime, platform,
         payload: '퇴근 30분 전입니다.');
 
     await flutterLocalNotificationsPlugin.schedule(
-        0, 'before10min', '퇴근 10분전 알림', endWorkTime, platform,
+        1, 'WorkTimeSystem', '퇴근 10분전 알림', endWorkTime, platform,
         payload: '퇴근 10분 전입니다.');
   }
 
