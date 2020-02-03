@@ -25,101 +25,29 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPage extends State<MainPage> {
-  ///////for Test/////
-  initWorkTime() {
-    var hour = '09';
-    var min = '48';
-    var today = '2020-01-20';
-    var time = hour + ':' + min;
-
-    var startTimeBody = {
-      'date': today,
-      'time': time,
-    };
-
-    var endTimeBody = {
-      'date': today,
-      'time': (int.parse(hour) + 9).toString() + ':' + min
-    };
-
-    this.timeHouse.setString('timeHouse', jsonEncode(startTimeBody));
-    this.timeHouse.setString('endTime', jsonEncode(endTimeBody));
-    this.startTime = startTimeBody['time'];
-    this.endTime = endTimeBody['time'];
-    showNotificationAtTimeTest();
-  }
-
-  /////////clock//////////
-
-  String _timeString;
-
-  SharedPreferences timeHouse;
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+  String _timeString; //화면의 타이머
+  Timer timer; //타이머 객체
+  SharedPreferences timeHouse; //시간저장소
   var startTime;
   var endTime;
-  Timer timer;
   var diffTime;
   var checkTimer = true;
-  int diff;
+  int diff = 0;
 
-  void runTimer() {
-    timer = Timer.periodic(Duration(seconds: 1), (Timer t) {
-      if (this.checkTimer == false || this.diff < 1) {
-        _timeString = null;
-        t.cancel();
-        reset(0);
-      } else {
-        _getTime();
-      }
-    });
-  }
+  @override
+  void initState() {
+    super.initState();
+    flutterLocalNotificationsPlugin = new FlutterLocalNotificationsPlugin();
+    var android = new AndroidInitializationSettings('mipmap/ic_launcher');
+    var iOS = new IOSInitializationSettings(
+        onDidReceiveLocalNotification: onDidReceiveLocalNotification);
+    var initSettings = new InitializationSettings(android, iOS);
 
-  void _getTime() {
-    final DateTime now = DateTime.now();
-    final String formattedDateTime = _formatDateTime(now);
-    setState(() {
-      _timeString = formattedDateTime;
-    });
-  }
+    flutterLocalNotificationsPlugin.initialize(initSettings,
+        onSelectNotification: onSelectNotification);
 
-  String _formatDateTime(DateTime now) {
-    if (this.timeHouse == null || checkTimer == false) {
-      return '';
-    }
-
-    var endTime = jsonDecode(this.timeHouse.getString('endTime'));
-
-    if (endTime == null || endTime == '') {
-      return '';
-    }
-
-    var splitEndDay = endTime['date'].toString().split('-');
-
-    var month = now.month.toString();
-    if (now.month.toString().length == 1) {
-      month = '0' + month.toString();
-    }
-
-    if (splitEndDay[0] != now.year.toString() ||
-        splitEndDay[1] != month ||
-        splitEndDay[2] != now.day.toString()) {
-      return '';
-    }
-
-    var splitEndTime = endTime['time'].toString().split(':');
-
-    var endTimeData = DateTime(
-        int.parse(splitEndDay[0]),
-        int.parse(splitEndDay[1]),
-        int.parse(splitEndDay[2]),
-        int.parse(splitEndTime[0]),
-        int.parse(splitEndTime[1]),
-        0);
-
-    this.diff = endTimeData.difference(now).inMilliseconds;
-    this.diffTime = DateFormat('HH:mm:ss')
-        .format(DateTime.fromMillisecondsSinceEpoch(this.diff, isUtc: true));
-
-    return this.diffTime;
+    this.timeCheck();
   }
 
   timeCheck() async {
@@ -133,7 +61,6 @@ class _MainPage extends State<MainPage> {
 
     var startTime = timeHouse.getString('timeHouse');
     var endTime = timeHouse.getString('endTime');
-
     if (endTime == null) {
       return;
     }
@@ -150,6 +77,76 @@ class _MainPage extends State<MainPage> {
     }
   }
 
+  void runTimer() {
+    timer = Timer.periodic(Duration(seconds: 1), (Timer t) {
+      if (this.checkTimer == false || this.diff == null || this.diff < 1) {
+        t.cancel();
+        reset();
+      } else {
+        _getTime();
+      }
+    });
+  }
+
+  /*
+   * 남은시간 출력
+   */
+  void _getTime() {
+    final DateTime now = DateTime.now();
+    final String formattedDateTime = _formatDateTime(now);
+    setState(() {
+      _timeString = formattedDateTime;
+    });
+  }
+
+  String _formatDateTime(DateTime now) {
+    if (this.timeHouse == null || checkTimer == false) {
+      return '';
+    }
+
+    var endTime = jsonDecode(this.timeHouse.getString('endTime'));
+    if (endTime == null || endTime == '') {
+      return '';
+    }
+
+    var splitEndDay = endTime['date'].toString().split('-');
+
+    var month = now.month.toString();
+    if (now.month.toString().length == 1) {
+      month = '0' + month.toString();
+    }
+
+    var nowStr;
+
+    if (now.day.toString().length == 1) {
+      nowStr = '0' + now.day.toString();
+    }
+
+    if (splitEndDay[0] != now.year.toString() ||
+        splitEndDay[1] != month ||
+        splitEndDay[2] != nowStr.toString()) {
+      return '';
+    }
+
+    var splitEndTime = endTime['time'].toString().split(':');
+
+    var endTimeData = DateTime(
+        int.parse(splitEndDay[0]),
+        int.parse(splitEndDay[1]),
+        int.parse(splitEndDay[2]),
+        int.parse(splitEndTime[0]),
+        int.parse(splitEndTime[1]),
+        0);
+
+    this.diff = endTimeData.difference(now).inMilliseconds;
+    this.diffTime = DateFormat('HH:mm:ss')
+        .format(DateTime.fromMillisecondsSinceEpoch(this.diff, isUtc: true));
+    return this.diffTime;
+  }
+
+  /*
+   * 출근시작버튼
+   */
   void _startWork(selfHour, selfMin) {
     var selfTime = null;
     this.checkTimer = true;
@@ -196,96 +193,11 @@ class _MainPage extends State<MainPage> {
       });
 
       _timeString = _formatDateTime(DateTime.now());
+
       runTimer();
       showNotificationAtTime(selfTime);
-      showStartDialog();
-    } else {
-      var data = jsonDecode(timeHouse);
-      if (data['date'] == today) {
-        _dialogMessage(context, jsonEncode(startTimeBody),
-            jsonEncode(endTimeBody), selfTime);
-      } else {
-        this.timeHouse.setString('timeHouse', jsonEncode(startTimeBody));
-        this.timeHouse.setString('endTime', jsonEncode(endTimeBody));
-        setState(() {
-          this.startTime = startTimeBody['time'];
-          this.endTime = endTimeBody['time'];
-        });
-        _timeString = _formatDateTime(DateTime.now());
-        runTimer();
-
-        showNotificationAtTime(selfTime);
-        showStartDialog();
-      }
+      startDialog();
     }
-  }
-
-  overwriteTime(startTimeBody, endTimeBody, selfTime) async {
-    this.diff = 0;
-
-    Future.delayed(Duration(seconds: 1));
-
-    this.timeHouse.setString('timeHouse', startTimeBody);
-    this.timeHouse.setString('endTime', endTimeBody);
-    setState(() {
-      this.startTime = jsonDecode(startTimeBody)['time'];
-      this.endTime = jsonDecode(endTimeBody)['time'];
-    });
-
-    await flutterLocalNotificationsPlugin.cancelAll();
-    _timeString = _formatDateTime(DateTime.now());
-    runTimer();
-
-    showNotificationAtTime(selfTime);
-    // showStartDialog();
-  }
-
-  Future<void> _dialogMessage(
-      BuildContext context, startTimeBody, endTimeBody, selfTime) {
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('경고'),
-          content: const Text('오늘 출근 시간이 이미 있습니다.\n덮어씌우시겠습니까?'),
-          actions: <Widget>[
-            FlatButton(
-              child: Text(
-                '취소',
-                style: TextStyle(color: Colors.red),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            FlatButton(
-              child: Text('확인'),
-              onPressed: () {
-                overwriteTime(startTimeBody, endTimeBody, selfTime);
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
-
-  @override
-  void initState() {
-    super.initState();
-    flutterLocalNotificationsPlugin = new FlutterLocalNotificationsPlugin();
-    var android = new AndroidInitializationSettings('mipmap/ic_launcher');
-    var iOS = new IOSInitializationSettings(
-        onDidReceiveLocalNotification: onDidReceiveLocalNotification);
-    var initSettings = new InitializationSettings(android, iOS);
-
-    flutterLocalNotificationsPlugin.initialize(initSettings,
-        onSelectNotification: onSelectNotification);
-
-    this.timeCheck();
   }
 
   Future onDidReceiveLocalNotification(
@@ -307,6 +219,9 @@ class _MainPage extends State<MainPage> {
             ));
   }
 
+  /*
+   * 알림수신 dialog
+   */
   Future onSelectNotification(String payload) async {
     showCupertinoDialog(
         context: context,
@@ -471,36 +386,34 @@ class _MainPage extends State<MainPage> {
                   child: Text('확인'),
                   onPressed: () async {
                     Navigator.pop(context);
-                    reset(null);
+                    reset();
                   },
                 )
               ],
             ));
   }
 
-  reset(timerOut) async {
-    if (this.checkTimer == false) {
-      if (!(timerOut != null && timerOut == 0)) {
-        await showDialog(
-            context: context,
-            builder: (BuildContext context) => CupertinoAlertDialog(
-                  title: Text('경고'),
-                  content: Text('출근데이터가 존재하지 않습니다.'),
-                  actions: <Widget>[
-                    CupertinoDialogAction(
-                      isDefaultAction: true,
-                      child: Text('OK'),
-                      onPressed: () async {
-                        Navigator.pop(context);
-                      },
-                    )
-                  ],
-                ));
-      }
-      return;
-    }
-    await flutterLocalNotificationsPlugin.cancelAll();
+  startDialog() {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) => CupertinoAlertDialog(
+              title: Text('출근 시작'),
+              content: Text('퇴근 30분, 10분 전에 퇴근알람이 울립니다.'),
+              actions: <Widget>[
+                CupertinoDialogAction(
+                  isDefaultAction: true,
+                  child: Text('확인'),
+                  onPressed: () async {
+                    Navigator.pop(context);
+                  },
+                )
+              ],
+            ));
+  }
 
+  reset() async {
+    await flutterLocalNotificationsPlugin.cancelAll();
+    
     try {
       setState(() {
         this.timeHouse.clear();
@@ -546,52 +459,20 @@ class _MainPage extends State<MainPage> {
         payload: '퇴근 10분 전입니다.');
   }
 
-  showNotificationAtTimeTest() async {
-    var android = new AndroidNotificationDetails(
-        'channel id', 'channel NAME', 'CHANNEL DESCRIPTION',
-        priority: Priority.High, importance: Importance.Max);
-    var iOS = new IOSNotificationDetails();
-    var platform = new NotificationDetails(android, iOS);
-
-    var scheduledNotificationDateTime =
-        new DateTime(2020, 01, 16, 09, 55).add(new Duration(seconds: 30600));
-    var testTime = DateTime.now().add(new Duration(seconds: 5));
-    print(testTime);
-    await flutterLocalNotificationsPlugin.schedule(
-        0, 'WorkTimeSystem', '퇴근시간 알림', testTime, platform,
-        payload: '퇴근 30분 전입니다.');
-    // await flutterLocalNotificationsPlugin.show(
-    //   0,
-    //   'WorkTimeSystem',
-    //   '퇴근시간 알림',
-    //   platform,
-    //   payload: '퇴근시간 30분 전입니다.',
-    // );
-  }
-
-  showStartDialog() {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) => CupertinoAlertDialog(
-              title: Text('출근시작'),
-              content: Text('퇴근 10분/30분 전에 퇴근알람이 울립니다.'),
-              actions: <Widget>[
-                CupertinoDialogAction(
-                  isDefaultAction: true,
-                  child: Text('OK'),
-                  onPressed: () async {
-                    Navigator.pop(context);
-                  },
-                )
-              ],
-            ));
-  }
-
+  /*
+   * 직접 입력 - 출근 시간 직접 설정하는 dialog
+   */
   showDatePicker() async {
     TimeOfDay time = await showTimePicker(
         context: context, initialTime: TimeOfDay(hour: 09, minute: 00));
     if (time != null) {
-      _startWork(time.hour.toString(), time.minute.toString());
+      var selfMin;
+      if (time.minute.toString().length == 1) {
+        selfMin = '0' + time.minute.toString();
+      } else {
+        selfMin = time.minute;
+      }
+      _startWork(time.hour.toString(), selfMin);
     }
   }
 }
