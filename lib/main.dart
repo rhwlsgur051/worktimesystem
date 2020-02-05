@@ -413,7 +413,7 @@ class _MainPage extends State<MainPage> {
 
   reset() async {
     await flutterLocalNotificationsPlugin.cancelAll();
-    
+
     try {
       setState(() {
         this.timeHouse.clear();
@@ -472,7 +472,7 @@ class _MainPage extends State<MainPage> {
       } else {
         selfMin = time.minute;
       }
-      _startWork(time.hour.toString(), selfMin);
+      _startWork(time.hour.toString(), selfMin.toString());
     }
   }
 }
