@@ -120,7 +120,12 @@ class _MainPage extends State<MainPage> {
 
     if (now.day.toString().length == 1) {
       nowStr = '0' + now.day.toString();
+    } else {
+      nowStr = now.day.toString();
     }
+
+    print(splitEndDay[2]);
+    print(nowStr.toString());
 
     if (splitEndDay[0] != now.year.toString() ||
         splitEndDay[1] != month ||
@@ -141,6 +146,7 @@ class _MainPage extends State<MainPage> {
     this.diff = endTimeData.difference(now).inMilliseconds;
     this.diffTime = DateFormat('HH:mm:ss')
         .format(DateTime.fromMillisecondsSinceEpoch(this.diff, isUtc: true));
+
     return this.diffTime;
   }
 
