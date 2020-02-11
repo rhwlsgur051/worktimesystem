@@ -442,27 +442,34 @@ class _MainPage extends State<MainPage> {
     var iOS = new IOSNotificationDetails();
     var platform = new NotificationDetails(android, iOS);
     DateTime scheduledNotificationDateTime;
+    DateTime endWorkTime10;
     DateTime endWorkTime;
 
     if (selfTime != null) {
       scheduledNotificationDateTime =
           selfTime.add(new Duration(seconds: 30600));
-      endWorkTime = selfTime.add(new Duration(seconds: 31800));
+      endWorkTime10 = selfTime.add(new Duration(seconds: 31800));
+      endWorkTime = selfTime.add(new Duration(seconds: 32400));
     } else {
       scheduledNotificationDateTime =
           new DateTime.now().add(new Duration(seconds: 30600));
-      endWorkTime = new DateTime.now().add(new Duration(seconds: 31800));
+      endWorkTime10 = new DateTime.now().add(new Duration(seconds: 31800));
+      endWorkTime = new DateTime.now().add(new Duration(seconds: 32400));
     }
 
     await flutterLocalNotificationsPlugin.cancelAll();
 
-    await flutterLocalNotificationsPlugin.schedule(
-        0, 'WorkTimeSystem', '퇴근시간 알림', scheduledNotificationDateTime, platform,
+    await flutterLocalNotificationsPlugin.schedule(0, 'WorkTimeSystem',
+        '퇴근 30분전 알림', scheduledNotificationDateTime, platform,
         payload: '퇴근 30분 전입니다.');
 
     await flutterLocalNotificationsPlugin.schedule(
-        1, 'WorkTimeSystem', '퇴근 10분전 알림', endWorkTime, platform,
+        1, 'WorkTimeSystem', '퇴근 10분전 알림', endWorkTime10, platform,
         payload: '퇴근 10분 전입니다.');
+
+    await flutterLocalNotificationsPlugin.schedule(
+        2, 'WorkTimeSystem', '퇴근 시간 알림', endWorkTime, platform,
+        payload: '퇴근 시간입니다. 고생하셨습니다.');
   }
 
   /*
